@@ -3,7 +3,7 @@ from flask_cors import CORS
 import joblib
 import pandas as pd
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -55,19 +55,19 @@ def predict_ewt():
         raw_hour = data.get('Entry_Hour', 8)
         raw_day = data.get('Entry_Day', 1) 
         
+        
+        raw_patient_type = data.get('Patient Type', 1)
+        
         formatted_hour = float(raw_hour)
         formatted_day = get_day_name(raw_day)
-        
-        patient_type = 'OUTPATIENT'
-        financial_class = 'INSURANCE'
 
-        print(f"Data extracted: Hour={formatted_hour}, Day={formatted_day}")
+        print(f"Data extracted: Hour={formatted_hour}, Day={formatted_day}, Patient Type={raw_patient_type}")
+        
         
         features = pd.DataFrame([{
             'Entry_Hour': formatted_hour,
             'Entry_Day': formatted_day,
-            'Patient Type': patient_type,
-            'Financial Class': financial_class
+            'Patient Type': raw_patient_type
         }])
         
         print("AI Calculating Screening Time...")
@@ -105,19 +105,18 @@ def predict_consult_ewt():
         raw_hour = data.get('Entry_Hour', 8.0)
         formatted_hour = float(raw_hour)
         
-        # Automatically generate the current day name
-        now = datetime.now()
+        # FIX ZON MASA MALAYSIA (Server Render guna masa UTC)
+        now = datetime.utcnow() + timedelta(hours=8)
         current_day_name = now.strftime('%A')
 
         print(f"Data received: Hour={formatted_hour}, Day={current_day_name}")
         
-        # We build the DataFrame to match EXACTLY with your training dataset columns:
-        # 'Screening_End_Hour', 'Screening_End_Day', 'Doctor Type', 'Patient Type'
+        # TUKAR 'OUTPATIENT' KEPADA NOMBOR 1 (Supaya padan dengan format model AI)
         features = pd.DataFrame([{
             'Screening_End_Hour': formatted_hour,
             'Screening_End_Day': current_day_name,
-            'Doctor Type': 'ANCHOR',      # Options from your CSV: ANCHOR, LOCUM, FLOATING
-            'Patient Type': 'OUTPATIENT'  # Based on your CSV, all are OUTPATIENT
+            'Doctor Type': 'ANCHOR',      
+            'Patient Type': 1  
         }])
         
         print("AI Calculating Consultation Time...")
